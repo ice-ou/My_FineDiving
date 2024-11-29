@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "main.py", line 4, in <module>
+    from tools import train_net, test_net
+  File "/home/root123/ybc/FineDiving/tools/__init__.py", line 1, in <module>
+    from .runner import train_net, test_net
+  File "/home/root123/ybc/FineDiving/tools/runner.py", line 6, in <module>
+    from tools import builder, helper
+  File "/home/root123/ybc/FineDiving/tools/builder.py", line 10, in <module>
+    from utils.misc import import_class
+  File "/home/root123/ybc/FineDiving/utils/misc.py", line 1, in <module>
+    import cv2.cv2
+ImportError: Bindings generation error. Submodule name should always start with a parent module name. Parent name: cv2.cv2. Submodule name: cv2

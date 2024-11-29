@@ -1,0 +1,34 @@
+Load config yaml from FineDiving_TSA.yaml
+Save the Config file at ./experiments/TSA/FineDiving/default/config.yaml
+Namespace(action_number_choosing=True, archs='TSA', base_lr=0.001, benchmark='FineDiving', bs_test=1, bs_train=8, ckpts=None, config='FineDiving_TSA.yaml', data_root='data/FineDiving', experiment_path='./experiments/TSA/FineDiving/default', fix_bn=True, fix_size=5, frame_length=96, label_path='Annotations/fine-grained_annotation_aqa.pkl', lr_factor=0.1, max_epoch=200, optimizer='Adam', prefix='default', pretrained_i3d_weight='models/model_rgb.pth', print_freq=40, prob_tas_threshold=0.25, random_choosing=False, resume=False, seed=0, step_num=3, sync_bn=False, test=False, test_split='Annotations/test_split.pkl', train_split='Annotations/train_split.pkl', voter_number=10, weight_decay=0, workers=2)
+Trainer start ... 
+Using I3D backbone
+Traceback (most recent call last):
+  File "main.py", line 19, in <module>
+    main()
+  File "main.py", line 16, in main
+    train_net(args)
+  File "/home/root123/ybc/FineDiving/tools/runner.py", line 78, in train_net
+    for idx, (data, target) in enumerate(train_dataloader):
+  File "/home/root123/anaconda3/envs/Finediving_ybc/lib/python3.7/site-packages/torch/utils/data/dataloader.py", line 530, in __next__
+    data = self._next_data()
+  File "/home/root123/anaconda3/envs/Finediving_ybc/lib/python3.7/site-packages/torch/utils/data/dataloader.py", line 1224, in _next_data
+    return self._process_data(data)
+  File "/home/root123/anaconda3/envs/Finediving_ybc/lib/python3.7/site-packages/torch/utils/data/dataloader.py", line 1250, in _process_data
+    data.reraise()
+  File "/home/root123/anaconda3/envs/Finediving_ybc/lib/python3.7/site-packages/torch/_utils.py", line 457, in reraise
+    raise exception
+IndexError: Caught IndexError in DataLoader worker process 0.
+Original Traceback (most recent call last):
+  File "/home/root123/anaconda3/envs/Finediving_ybc/lib/python3.7/site-packages/torch/utils/data/_utils/worker.py", line 287, in _worker_loop
+    data = fetcher.fetch(index)
+  File "/home/root123/anaconda3/envs/Finediving_ybc/lib/python3.7/site-packages/torch/utils/data/_utils/fetch.py", line 49, in fetch
+    data = [self.dataset[idx] for idx in possibly_batched_index]
+  File "/home/root123/anaconda3/envs/Finediving_ybc/lib/python3.7/site-packages/torch/utils/data/_utils/fetch.py", line 49, in <listcomp>
+    data = [self.dataset[idx] for idx in possibly_batched_index]
+  File "/home/root123/ybc/FineDiving/datasets/FineDiving_Pair.py", line 92, in __getitem__
+    data['video'], data['transits'], data['frame_labels'] = self.load_video(sample_1)
+  File "/home/root123/ybc/FineDiving/datasets/FineDiving_Pair.py", line 71, in load_video
+    start_frame = int(image_list[0].split("/")[-1][:-4])
+IndexError: list index out of range
+

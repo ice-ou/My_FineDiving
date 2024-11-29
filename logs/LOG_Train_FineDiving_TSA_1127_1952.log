@@ -1,0 +1,11 @@
+Load config yaml from FineDiving_TSA.yaml
+Save the Config file at ./experiments/TSA/FineDiving/default/config.yaml
+Namespace(action_number_choosing=True, archs='TSA', base_lr=0.001, benchmark='FineDiving', bs_test=1, bs_train=8, ckpts=None, config='FineDiving_TSA.yaml', data_root='data/FINADiving_MTL_256s', experiment_path='./experiments/TSA/FineDiving/default', fix_bn=True, fix_size=5, frame_length=96, label_path='Annotations/fine-grained_annotation_aqa.pkl', lr_factor=0.1, max_epoch=200, optimizer='Adam', prefix='default', pretrained_i3d_weight='models/model_rgb.pth', print_freq=40, prob_tas_threshold=0.25, random_choosing=False, resume=False, seed=0, step_num=3, sync_bn=False, test=False, test_split='Annotations/test_split.pkl', train_split='Annotations/train_split.pkl', voter_number=10, weight_decay=0, workers=2)
+Trainer start ... 
+Using I3D backbone
+/home/root123/anaconda3/envs/Finediving_ybc/lib/python3.7/site-packages/torch/nn/functional.py:878: UserWarning: Note that order of the arguments: ceil_mode and return_indices will changeto match the args list in nn.MaxPool3d in a future release.
+  warnings.warn("Note that order of the arguments: ceil_mode and return_indices will change"
+[Training][0/200][40/282] 	 Batch_time: 0.32 	 Batch_loss: 417.0094 	 lr1 : 0.00010 	 lr2 : 0.00100
+[Training][0/200][80/282] 	 Batch_time: 0.32 	 Batch_loss: 665.2603 	 lr1 : 0.00010 	 lr2 : 0.00100
+[Training][0/200][120/282] 	 Batch_time: 0.33 	 Batch_loss: 432.3509 	 lr1 : 0.00010 	 lr2 : 0.00100
+[Training][0/200][160/282] 	 Batch_time: 0.33 	 Batch_loss: 640.7857 	 lr1 : 0.00010 	 lr2 : 0.00100
