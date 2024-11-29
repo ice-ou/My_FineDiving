@@ -19,7 +19,8 @@ class I3D_backbone(nn.Module):
 
     def forward(self, video_1, video_2):
 
-        total_video = torch.cat((video_1, video_2), 0)
+        total_video = torch.cat((video_1, video_2), 0)  # 将两个视频帧拼接起来
+        # print(total_video.shape())
         start_idx = list(range(0, 90, 10))
         video_pack = torch.cat([total_video[:, :, i: i + 16] for i in start_idx])
         total_feamap, total_feature = self.backbone(video_pack)
@@ -28,6 +29,7 @@ class I3D_backbone(nn.Module):
         total_feature = total_feature.reshape(len(start_idx), len(total_video), -1).transpose(0, 1)
         total_feamap = total_feamap.reshape(len(start_idx), len(total_video), C, T, H, W).transpose(0, 1)
 
+        # 将原始张量的前半部分和后半部分沿着维度2拼接起来。
         com_feature_12 = torch.cat(
             (total_feature[:total_feature.shape[0] // 2], total_feature[total_feature.shape[0] // 2:]), 2)
         com_feamap_12 = torch.cat(
