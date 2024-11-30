@@ -21,37 +21,45 @@ def network_forward_train(base_model, psnet_model, decoder, regressor_delta, pre
 
     ############# I3D featrue #############
     com_feature_12, com_feamap_12 = base_model(video_1, video_2)
+    # 取前1024 dimension作为视频1的特征（8x9x1024） 9表示9个视频段
     video_1_fea = com_feature_12[:,:,:com_feature_12.shape[2] // 2]
     video_2_fea = com_feature_12[:,:,com_feature_12.shape[2] // 2:]
     video_1_feamap = com_feamap_12[:,:,:com_feature_12.shape[2] // 2]
+    # 取后1024 dimension作为视频2的特征图 （8x9x1024x2x4x4）
     video_2_feamap = com_feamap_12[:,:,com_feature_12.shape[2] // 2:]
 
     N,T,C,T_t,H_t,W_t = video_1_feamap.size()
+    # 在倒数第三维上进行平均，（8x9x1024x2x4x4）->（8x9x1024x4x4）
     video_1_feamap = video_1_feamap.mean(-3)
     video_2_feamap = video_2_feamap.mean(-3)
+    # 调整形状 （8x9x1024x4x4）-> (128x9x1024)
     video_1_feamap_re = video_1_feamap.reshape(-1, T, C)
     video_2_feamap_re = video_2_feamap.reshape(-1, T, C)
 
     ############# Procedure Segmentation #############
     com_feature_12_u = torch.cat((video_1_fea, video_2_fea), 0)
+    # 将两个视频特征合在一起 (16x9x1024)
     com_feamap_12_u = torch.cat((video_1_feamap_re, video_2_feamap_re), 0)
 
     u_fea_96, transits_pred = psnet_model(com_feature_12_u)
+    # 输出为16x96x2,两个转换点
     u_feamap_96, transits_pred_map = psnet_model(com_feamap_12_u)
     u_feamap_96 = u_feamap_96.reshape(2*N, u_feamap_96.shape[1], u_feamap_96.shape[2], H_t, W_t)
 
     label_12_tas = torch.cat((label_1_tas, label_2_tas), 0)
     label_12_pad = torch.zeros(transits_pred.size())
     for bs in range(transits_pred.shape[0]):
-        label_12_pad[bs, int(label_12_tas[bs, 0]), 0] = 1
+        label_12_pad[bs, int(label_12_tas[bs, 0]), 0] = 1  # 将标注的转换帧置为1
         label_12_pad[bs, int(label_12_tas[bs, -1]), -1] = 1
 
-    loss_tas = bce(transits_pred, label_12_pad.cuda())
+    loss_tas = bce(transits_pred, label_12_pad.cuda())  # 采用二进制交叉商损失函数
 
+    # 将预测概率转换为具体整数
     num = round(transits_pred.shape[1] / transits_pred.shape[-1])
     transits_st_ed = torch.zeros(label_12_tas.size())
     for bs in range(transits_pred.shape[0]):
         for i in range(transits_pred.shape[-1]):
+            # 找到最大的概率对应的帧索引，第一次转换发生在前48帧，第二次转换发生在后48帧
             transits_st_ed[bs, i] = transits_pred[bs, i * num: (i + 1) * num, i].argmax(0).cpu().item() + i * num
     label_1_tas_pred = transits_st_ed[:transits_st_ed.shape[0] // 2]
     label_2_tas_pred = transits_st_ed[transits_st_ed.shape[0] // 2:]
@@ -63,10 +71,10 @@ def network_forward_train(base_model, psnet_model, decoder, regressor_delta, pre
     u_feamap_96_1 = u_feamap_96[:u_feamap_96.shape[0] // 2].transpose(1, 2)
     u_feamap_96_2 = u_feamap_96[u_feamap_96.shape[0] // 2:].transpose(1, 2)
 
-    if epoch / args.max_epoch <= args.prob_tas_threshold:
+    if epoch / args.max_epoch <= args.prob_tas_threshold:  # 在前几轮训练过程中，动作分割网络还不可信
         video_1_segs = []
         for bs_1 in range(u_fea_96_1.shape[0]):
-            video_1_st = int(label_1_tas[bs_1][0].item())
+            video_1_st = int(label_1_tas[bs_1][0].item())  # 使用分割的真实标签
             video_1_ed = int(label_1_tas[bs_1][1].item())
             video_1_segs.append(seg_pool_1d(u_fea_96_1[bs_1].unsqueeze(0), video_1_st, video_1_ed, args.fix_size))
         video_1_segs = torch.cat(video_1_segs, 0).transpose(1, 2)
