@@ -36,7 +36,7 @@ class Attention(nn.Module):
         self.proj = nn.Linear(dim, dim)
         self.proj_drop = nn.Dropout(proj_drop)
 
-    def forward(self, x):
+    def forward(self, x):  # 自注意力
         B, N, C = x.shape
         qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         q, k, v = qkv[0], qkv[1], qkv[2]
@@ -57,7 +57,7 @@ class CrossAttention(nn.Module):
         self.num_heads = num_heads
         self.dim = dim
         self.out_dim = out_dim
-        head_dim = out_dim // num_heads
+        head_dim = out_dim // num_heads  # 每个头的维度
         self.scale = qk_scale or head_dim ** -0.5
 
         self.q_map = nn.Linear(dim, out_dim, bias=qkv_bias)
@@ -68,7 +68,7 @@ class CrossAttention(nn.Module):
         self.proj = nn.Linear(out_dim, out_dim)
         self.proj_drop = nn.Dropout(proj_drop)
 
-    def forward(self, q, v):
+    def forward(self, q, v):  # 交叉注意力机制
         B, N, _ = q.shape
         C = self.out_dim
         k = v

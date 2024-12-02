@@ -49,7 +49,9 @@ def cal_tiou(tIoU_results, tiou_thresholds):
     tIoU_correct_per_thr = tIoU_correct.sum(0)
     return tIoU_correct_per_thr
 
+# 对特征进行线形插值
 def seg_pool_1d(video_fea_1, video_1_st, video_1_ed, fix_size):
+    # 将特征输出为fix_size，使用线性插值的方式
     video_fea_seg0 = F.interpolate(video_fea_1[:,:,:video_1_st], size=fix_size, mode='linear', align_corners=True)
     video_fea_seg1 = F.interpolate(video_fea_1[:,:,video_1_st:video_1_ed], size=fix_size, mode='linear', align_corners=True)
     video_fea_seg2 = F.interpolate(video_fea_1[:,:,video_1_ed:], size=fix_size, mode='linear', align_corners=True)

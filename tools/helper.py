@@ -54,7 +54,7 @@ def network_forward_train(base_model, psnet_model, decoder, regressor_delta, pre
 
     loss_tas = bce(transits_pred, label_12_pad.cuda())  # 采用二进制交叉商损失函数
 
-    # 将预测概率转换为具体整数
+    # 将预测概率转换为具体帧数
     num = round(transits_pred.shape[1] / transits_pred.shape[-1])
     transits_st_ed = torch.zeros(label_12_tas.size())
     for bs in range(transits_pred.shape[0]):
@@ -71,13 +71,14 @@ def network_forward_train(base_model, psnet_model, decoder, regressor_delta, pre
     u_feamap_96_1 = u_feamap_96[:u_feamap_96.shape[0] // 2].transpose(1, 2)
     u_feamap_96_2 = u_feamap_96[u_feamap_96.shape[0] // 2:].transpose(1, 2)
 
-    if epoch / args.max_epoch <= args.prob_tas_threshold:  # 在前几轮训练过程中，动作分割网络还不可信
-        video_1_segs = []
+    if epoch / args.max_epoch <= args.prob_tas_threshold:  # 在前几轮训练过程中，动作分割网络还不可信？
+        video_1_segs = []  # 存放视频分割结果（帧数）
         for bs_1 in range(u_fea_96_1.shape[0]):
             video_1_st = int(label_1_tas[bs_1][0].item())  # 使用分割的真实标签
             video_1_ed = int(label_1_tas[bs_1][1].item())
             video_1_segs.append(seg_pool_1d(u_fea_96_1[bs_1].unsqueeze(0), video_1_st, video_1_ed, args.fix_size))
-        video_1_segs = torch.cat(video_1_segs, 0).transpose(1, 2)
+            # 1x64x15
+        video_1_segs = torch.cat(video_1_segs, 0).transpose(1, 2)  # 8x15x64
 
         video_2_segs = []
         for bs_2 in range(u_fea_96_2.shape[0]):                 
@@ -93,6 +94,7 @@ def network_forward_train(base_model, psnet_model, decoder, regressor_delta, pre
             video_1_segs_map.append(seg_pool_3d(u_feamap_96_1[bs_1].unsqueeze(0), video_1_st, video_1_ed, args.fix_size))
         video_1_segs_map = torch.cat(video_1_segs_map, 0)
         video_1_segs_map = video_1_segs_map.reshape(video_1_segs_map.shape[0], video_1_segs_map.shape[1], video_1_segs_map.shape[2], -1).transpose(2, 3)
+        # 8x240x64
         video_1_segs_map = torch.cat([video_1_segs_map[:,:,:,i] for i in range(video_1_segs_map.shape[-1])], 2).transpose(1, 2)
 
         video_2_segs_map = []
@@ -106,7 +108,7 @@ def network_forward_train(base_model, psnet_model, decoder, regressor_delta, pre
     else:
         video_1_segs = []
         for bs_1 in range(u_fea_96_1.shape[0]):
-            video_1_st = int(label_1_tas_pred[bs_1][0].item())
+            video_1_st = int(label_1_tas_pred[bs_1][0].item())  # 使用预测的分割标签
             video_1_ed = int(label_1_tas_pred[bs_1][1].item())
             if video_1_st == 0:
                 video_1_st = 1
@@ -152,8 +154,8 @@ def network_forward_train(base_model, psnet_model, decoder, regressor_delta, pre
         video_2_segs_map = video_2_segs_map.reshape(video_2_segs_map.shape[0], video_2_segs_map.shape[1], video_2_segs_map.shape[2], -1).transpose(2, 3)
         video_2_segs_map = torch.cat([video_2_segs_map[:, :, :, i] for i in range(video_2_segs_map.shape[-1])], 2).transpose(1, 2)
 
-    decoder_video_12_map_list = []
-    decoder_video_21_map_list = []
+    decoder_video_12_map_list = []  # 用视频1的特征（video_1_segs）和视频二的特征图(video_2_segs_map)
+    decoder_video_21_map_list = []  # 用视频2的特征(video_2_segs)和视频二的特征图(video_1_segs_map)
     for i in range(args.step_num):
         decoder_video_12_map = decoder(video_1_segs[:, i*args.fix_size:(i+1)*args.fix_size,:],
                                                       video_2_segs_map[:, i*args.fix_size*H_t*W_t:(i+1)*args.fix_size*H_t*W_t,:])     # N,15,256/64
@@ -180,15 +182,17 @@ def network_forward_train(base_model, psnet_model, decoder, regressor_delta, pre
     batch_time = end - start
 
     score = (delta[:delta.shape[0]//2].detach() + label_2_score)
-    pred_scores.extend([i.item() for i in score])
+    pred_scores.extend([i.item() for i in score])  # 预测该batch下的所有视频的分数
 
     tIoU_results = []
     for bs in range(transits_pred.shape[0] // 2):
+        # 计算时间交并比
         tIoU_results.append(segment_iou(np.array(label_12_tas.squeeze(-1).cpu())[bs],
                                         np.array(transits_st_ed.squeeze(-1).cpu())[bs],
                                         args))
 
     tiou_thresholds = np.array([0.5, 0.75])
+    # 计算在不同 IoU 阈值下的正确匹配数量。
     tIoU_correct_per_thr = cal_tiou(tIoU_results, tiou_thresholds)
     Batch_tIoU_5 = tIoU_correct_per_thr[0]
     Batch_tIoU_75 = tIoU_correct_per_thr[1]

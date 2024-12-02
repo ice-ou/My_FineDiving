@@ -25,7 +25,7 @@ frame_length : 96
 voter_number : 10
 print_freq : 40
 fix_size : 5
-step_num : 3
+step_num : 3  # 步骤数（起跳、飞行、落水）
 prob_tas_threshold : 0.25
 random_choosing : False
 action_number_choosing: True
